@@ -1,0 +1,187 @@
+---
+title: "QC_Check"
+author: "Brian Yandell"
+date: "2024-09-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Assume data created by QC_automation.Rmd doc.
+Need to add reverse engineering from saved CSV back to long format.
+
+## Targeted Compounds with Same Name or Id
+
+Find entries with same compound and compoundId for HCneg and RPpos.
+
+```{r}
+out <- dplyr::full_join(
+  rescale_HCneg |>
+    dplyr::distinct(compoundId, compound) |>
+#    tidyr::unite(compound, compoundId, compound) |>
+    dplyr::mutate(HCneg = TRUE),
+  rescale_RPpos |>
+    dplyr::distinct(compoundId, compound)  |>
+#    tidyr::unite(compound, compoundId, compound) |>
+    dplyr::mutate(RPpos = TRUE),
+  by = c("compound", "compoundId")) |>
+  dplyr::mutate(HCneg = !is.na(HCneg),
+                RPpos = !is.na(RPpos))
+out |> dplyr::count(HCneg, RPpos)
+```
+
+```{r}
+dplyr::filter(out, HCneg & RPpos)
+```
+
+```{r}
+outc <- dplyr::full_join(
+  rescale_HCneg |>
+    dplyr::distinct(compoundId) |>
+    dplyr::mutate(HCneg = TRUE),
+  rescale_RPpos |>
+    dplyr::distinct(compoundId)  |>
+    dplyr::mutate(RPpos = TRUE),
+  by = "compoundId") |>
+  dplyr::mutate(HCneg = !is.na(HCneg),
+                RPpos = !is.na(RPpos))
+outc |> dplyr::count(HCneg, RPpos)
+```
+
+```{r}
+outcu <- dplyr::filter(outc, HCneg & RPpos)
+```
+
+```{r}
+outcu |> dplyr::filter(
+  compoundId %in% dplyr::filter(out,
+                                HCneg & RPpos)$compoundId)
+```
+
+```{r}
+outi <- out |> 
+  dplyr::filter(compoundId %in% outcu$compoundId,
+                !(HCneg & RPpos))
+nrow(outi)
+```
+
+```{r}
+id3 <- (outi |>
+  dplyr::count(compoundId) |>
+  dplyr::filter(n == 3))$compoundId
+outi |>
+  dplyr::filter(compoundId %in% id3)
+```
+
+```{r}
+outi |> 
+  dplyr::filter(!(compoundId %in% id3)) |>
+  dplyr::mutate(method = ifelse(HCneg, "HCneg", "RPpos")) |>
+  dplyr::select(compoundId, compound, method) |>
+  tidyr::pivot_wider(names_from = "method", values_from = "compound")
+```
+
+Start of comparison. At present we have mouse_id but not what diet they are on.
+Turns out the `medRt` and `medHz` are the same within each `compoundId`.
+Not sure what to make of range of `value`s.
+
+```{r}
+paired <- sort(unique(dplyr::filter(outi, !(compoundId %in% id3))$compoundId))
+pairTar <- dplyr::full_join(
+  rescale_HCneg |>
+    dplyr::filter(compoundId %in% paired) |>
+    dplyr::select(compoundId, mouse_id, Batch, Plate, time, value),
+  rescale_RPpos |>
+    dplyr::filter(compoundId %in% paired) |>
+    dplyr::distinct(compoundId, mouse_id, Batch, Plate, time, value),
+  by = c("compoundId","mouse_id", "Batch", "Plate", "time"),
+  suffix = c("_HC", "_RP"),
+  relationship = "many-to-many") # this indicates problem
+```
+
+```{r}
+pairTar |>
+  dplyr::group_by(compoundId) |>
+  dplyr::summarize(value_HC = max(value_HC, na.rm = TRUE),
+                   value_RP = max(value_RP, na.rm = TRUE),
+                  .groups = "drop") |>
+  dplyr::ungroup() |>
+  dplyr::summarize(value_HC = max(value_HC, na.rm = TRUE),
+                   value_RP = max(value_RP, na.rm = TRUE),
+                  .groups = "drop")
+```
+
+
+```{r}
+ggplot2::ggplot(
+  pairTar |>
+    dplyr::filter(value_HC > 0, value_RP > 0) |>
+    tidyr::pivot_longer(value_HC:value_RP,
+                        names_to = "meth", values_to = "value")) +
+  ggplot2::aes(log10(.data$value), col = .data$meth) +
+  ggplot2::geom_density() +
+  ggplot2::facet_grid(.data$Batch ~ .data$Plate) 
+```
+
+```{r}
+ggplot2::ggplot(
+  pairTar |>
+    dplyr::filter(value_HC > 0, value_RP > 0)) +
+  ggplot2::aes(.data$value_HC, .data$value_RP) +
+  ggplot2::geom_point(alpha = 0.1, size = 0.1) +
+  ggplot2::geom_smooth(method = "loess", se = FALSE, formula = 'y~x') +
+  ggplot2::facet_grid(.data$Batch ~ .data$Plate)
+```
+
+## Untargeted Compounds
+
+Issue here is more complicated as there are now multiple peaks. (see column `medRt`)
+
+Two things to look at:
+
+- each of HCneg, RPpos look at variation in medRt
+- 1-5 peaks: how to compare?
+- 738 compounds in HCneg and RPpos ()
+
+```{r}
+out <- dplyr::full_join(
+  rescale_HCnegU |>
+    dplyr::distinct(compoundId, compound) |>
+    dplyr::mutate(HCneg = TRUE),
+  rescale_RPposU |>
+    dplyr::distinct(compoundId, compound)  |>
+    dplyr::mutate(RPpos = TRUE),
+  by = c("compound", "compoundId")) |>
+  dplyr::mutate(HCneg = !is.na(HCneg),
+                RPpos = !is.na(RPpos))
+out |> dplyr::count(HCneg, RPpos)
+```
+
+```{r}
+outc <- dplyr::full_join(
+  rescale_HCnegU |>
+    dplyr::distinct(compoundId) |>
+    dplyr::mutate(HCneg = TRUE),
+  rescale_RPposU |>
+    dplyr::distinct(compoundId)  |>
+    dplyr::mutate(RPpos = TRUE),
+  by = "compoundId") |>
+  dplyr::mutate(HCneg = !is.na(HCneg),
+                RPpos = !is.na(RPpos))
+outc |> dplyr::count(HCneg, RPpos)
+```
+
+```{r}
+outcu <- dplyr::filter(outc, HCneg & RPpos)
+```
+
+```{r}
+outcu |> dplyr::filter(
+  compoundId %in% dplyr::filter(out,
+                                HCneg & RPpos)$compoundId) |>
+  dplyr::count(HCneg, RPpos)
+```
+
+
