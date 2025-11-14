@@ -40,15 +40,19 @@ read_raw_metab <- function(dirpath, filename, sheet = 1, skip = 0,
         stringr::str_replace(.data$sample, "^run[0-9]+-([0-9A-Za-z]+)_.*", "\\1"),
         "%d%b%y"))
   
-  # Add Batch and Plate if not `NULL`.
-  # Raw data does not have Batch and Plate in it.
-  if(!is.null(Batch_Plate)) {
-    out <- dplyr::left_join(
-      out, 
-      dplyr::select(Batch_Plate, rundate, Batch, Plate),
-      by = "rundate")
+  # Add `Batch` and `Plate` if not `NULL`.
+  # Raw data does not have `Batch` and `Plate` in it.
+  if(is.null(Batch_Plate)) {
+    # Make up `Batch` and `Plate` if not there.
+    Batch_Plate <- dplyr::distinct(out, rundate) |>
+      dplyr::mutate(Batch = 1, Plate = dplyr::row_number()) |>
+      tidyr::unite(Batch_Plate, Batch, Plate, remove = FALSE)
   }
-  
+  out <- dplyr::left_join(
+    out, 
+    dplyr::select(Batch_Plate, rundate, Batch, Plate),
+    by = "rundate")
+
   # Parse Time and Rep
   out <- dplyr::mutate(
     out,
