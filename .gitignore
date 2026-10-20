@@ -13,3 +13,4 @@ data/
 
 # pkgdown site
 docs/
+*.docx
