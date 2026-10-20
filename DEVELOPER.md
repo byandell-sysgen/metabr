@@ -123,3 +123,16 @@ The repository includes several analysis workflows and vignette notebooks:
 - [`QC_steps.Rmd`](QC_steps.Rmd): Detailed step-by-step walkthrough of QC pool calculations and correction factors.
 - [`QC_check.Rmd`](QC_check.Rmd): Diagnostic verification of batch correction outcomes.
 - [`elmaven.Rmd`](elmaven.Rmd): Peak-area table parsing and El-MAVEN output structure evaluation.
+
+---
+
+## 5. Vignettes & Documentation Suite (`vignettes/devel_guide/`)
+
+The documentation suite configured for the `pkgdown` website (`https://byandell-sysgen.github.io/metabr`) includes:
+
+- [`vignettes/devel_guide/index.Rmd`](vignettes/devel_guide/index.Rmd): Developer Guide Overview & Architecture.
+- [`vignettes/devel_guide/qc_pipeline.Rmd`](vignettes/devel_guide/qc_pipeline.Rmd): QC Pipeline & Correction Methodology.
+- [`vignettes/devel_guide/data_ingestion.Rmd`](vignettes/devel_guide/data_ingestion.Rmd): Data Ingestion & IO Format Specifications.
+- [`vignettes/devel_guide/datasets.Rmd`](vignettes/devel_guide/datasets.Rmd): QC Datasets & Directory Organization (replacing root `datasets.md`).
+- [`vignettes/devel_guide/deployment.Rmd`](vignettes/devel_guide/deployment.Rmd): CI/CD & Site Deployment Walkthrough.
+- [`vignettes/devel_guide/refactor.Rmd`](vignettes/devel_guide/refactor.Rmd): Package Refactoring & Data Reorganization.

@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## Package Purpose & Ecosystem
 
-**metabr** (v0.2.3) is an R package within the `foundr` / systems genetics ecosystem providing specialized tools for metabolomics data ingestion, mass spectrometry peak-area quality control (QC) batch correction, normalization, and curation discrepancy analysis.
+**metabr** (v0.2.4) is an R package within the `foundr` / systems genetics ecosystem providing specialized tools for metabolomics data ingestion, mass spectrometry peak-area quality control (QC) batch correction, normalization, and curation discrepancy analysis.
 
 - **Author:** Brian S. Yandell (<brian.yandell@wisc.edu>)
 - **License:** GPL-3
@@ -93,6 +93,22 @@ devtools::check(cran = FALSE, vignettes = FALSE)
 
 ---
 
+## Batch Organization & Pipeline Workflows
+
+Metabolomics data drops are organized by timestamped subdirectories under `data/"QC Batch Correction"` (`20231127`, `20251112`, `20261020`), as documented in [`datasets.Rmd`](datasets.html).
+
+End-to-end processing is automated through `QC_Automation.Rmd`, parameterized by `batch_date`:
+
+```r
+# Execute pipeline for default batch (20261020)
+rmarkdown::render("QC_Automation.Rmd")
+
+# Or render an earlier cohort
+rmarkdown::render("QC_Automation.Rmd", params = list(batch_date = "20251112"))
+```
+
+---
+
 ## Developer Guide Navigation
 
 This Developer Guide is organized into the following detailed sub-articles:
@@ -100,3 +116,6 @@ This Developer Guide is organized into the following detailed sub-articles:
 1. **[Developer Guide Overview & Architecture](index.html)**: Package purpose, ecosystem architecture, end-to-end processing flowchart, and quick start instructions.
 2. **[QC Pipeline & Correction Methodology](qc_pipeline.html)**: Mathematical specifications for QC correction factors, compound-wise median retention time (`medRt`) handling, missing value imputation, and `hand_auto` curation diagnostics.
 3. **[Data Ingestion & IO Format Specifications](data_ingestion.html)**: Detailed schemas for raw mass spectrometry spreadsheets, minute time-course files, and long-format tidy data frame representations.
+4. **[CI/CD & Site Deployment Walkthrough](deployment.html)**: Specifications for `pkgdown` site building, GitHub Actions deployment workflow, and repository configuration.
+5. **[Package Refactoring & Data Reorganization](refactor.html)**: Context and timeline for the 2026 data reorganization, QC pipeline unification, and recipe for ingesting future data drops.
+6. **[QC Datasets & Directory Organization](datasets.html)**: Details on timestamped data drops under `data/"QC Batch Correction"`, protocol SOPs, and MS OneDrive links.

@@ -33,7 +33,7 @@ remotes::install_github("byandell/metabr")
 
 ### Step 0: Data Setup
 
-Before running batch correction, ensure raw data and/or reference files are located in the expected dated directory under `data/"QC Batch Correction"` (documented in [datasets.md](datasets.md)):
+Before running batch correction, ensure raw data and/or reference files are located in the expected dated directory under `data/"QC Batch Correction"` (documented in [`datasets.Rmd`](vignettes/devel_guide/datasets.Rmd)):
 
 ```r
 # Timestamped data directories by study batch:
@@ -168,3 +168,4 @@ For compound $c$ measured on plate $p$ within batch $b$:
 
 - See [DEVELOPER.md](DEVELOPER.md) for detailed package architecture, data models, and developer environment setup.
 - See [`QC_Automation.Rmd`](QC_Automation.Rmd) and [`QC_steps.Rmd`](QC_steps.Rmd) for detailed analysis walkthroughs across targeted and untargeted modes.
+- See [`vignettes/devel_guide/`](vignettes/devel_guide/) for online developer documentation covering architecture, QC formulas, schemas, deployment, and dataset directory organization ([`datasets.Rmd`](vignettes/devel_guide/datasets.Rmd)).

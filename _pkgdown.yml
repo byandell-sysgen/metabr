@@ -39,6 +39,12 @@ navbar:
           href: articles/devel_guide/qc_pipeline.html
         - text: "Data Ingestion & IO Format Specifications"
           href: articles/devel_guide/data_ingestion.html
+        - text: "CI/CD & Site Deployment Walkthrough"
+          href: articles/devel_guide/deployment.html
+        - text: "Package Refactoring & Data Reorganization"
+          href: articles/devel_guide/refactor.html
+        - text: "QC Datasets & Directory Organization"
+          href: articles/devel_guide/datasets.html
 
 articles:
   - title: "Developer Guides"
@@ -46,6 +52,9 @@ articles:
       - "devel_guide/index"
       - "devel_guide/qc_pipeline"
       - "devel_guide/data_ingestion"
+      - "devel_guide/deployment"
+      - "devel_guide/refactor"
+      - "devel_guide/datasets"
 
 reference:
   - title: "Quality Control & Batch Correction Engine"
