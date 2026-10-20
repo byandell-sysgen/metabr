@@ -12,8 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 **This is experimental and incomplete. Likely not the desired approach.**
 
 ```{r eval = FALSE}
-if (!require("BiocManager", quietly = TRUE))
+if (!require("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
+}
 BiocManager::install("GO.db")
 BiocManager::install("EnrichmentBrowser")
 BiocManager::install("OmnipathR")
@@ -49,7 +50,7 @@ genome scale metabolic models (http://bigg.ucsd.edu/data_access) have all the in
 http://bigg.ucsd.edu/data_access
 
 ```{r}
-if(!file.exists(filename <- "kegg_pw.rds")) {
+if (!file.exists(filename <- "kegg_pw.rds")) {
   kegg_pw <- OmnipathR::kegg_pathways_download(simplify = TRUE)
   saveRDS(kegg_pw, filename)
 } else {
