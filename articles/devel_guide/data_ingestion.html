@@ -39,7 +39,7 @@
 
     <a class="navbar-brand me-2" href="../../index.html">metabr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,9 @@
 <li><a class="dropdown-item" href="../../articles/devel_guide/index.html">Developer Guide Overview &amp; Architecture</a></li>
     <li><a class="dropdown-item" href="../../articles/devel_guide/qc_pipeline.html">QC Pipeline &amp; Correction Methodology</a></li>
     <li><a class="dropdown-item" href="../../articles/devel_guide/data_ingestion.html">Data Ingestion &amp; IO Format Specifications</a></li>
+    <li><a class="dropdown-item" href="../../articles/devel_guide/deployment.html">CI/CD &amp; Site Deployment Walkthrough</a></li>
+    <li><a class="dropdown-item" href="../../articles/devel_guide/refactor.html">Package Refactoring &amp; Data Reorganization</a></li>
+    <li><a class="dropdown-item" href="../../articles/devel_guide/datasets.html">QC Datasets &amp; Directory Organization</a></li>
   </ul>
 </li>
       </ul>
@@ -124,7 +127,28 @@ rules, and data frame schemas used throughout
     class rawExcel,batchExcel,minuteDir src
     class readRaw,readBatch,readMinute prs
     class tidyDF sch</code></pre>
+<div class="section level4">
+<h4 id="batch-directory-organization">Batch Directory Organization<a class="anchor" aria-label="anchor" href="#batch-directory-organization"></a>
+</h4>
+<p>Metabolite data transfers are stored by dated drops under
+<code>data/"QC Batch Correction"</code> (documented in <a href="datasets.html"><code>datasets.Rmd</code></a>):</p>
+<ul>
+<li>
+<strong><code>20231127/</code> (Founder Plasma)</strong>: Contains
+raw CSVs in <code>#Founder_Plasma_Raw_Data/</code> and hand-calculated
+reference workbooks in
+<code>#Founder_Plasma_Batch_Corrected_Data/</code>.</li>
+<li>
+<strong><code>20251112/</code> (DO Livers)</strong>: Raw CSVs in
+<code>2025_Nov_Raw/</code> (featuring <code>(in)</code> input indicators
+and <code>min1000</code> minimum area flags).</li>
+<li>
+<strong><code>20261020/</code> (DO Plasma)</strong>: Raw/corrected
+CSVs in
+<code>DO_Plasma_tar_untar_metab_For_Batch_Correction/</code>.</li>
+</ul>
 <hr>
+</div>
 </div>
 <div class="section level3">
 <h3 id="standard-tidy-long-format-data-schema">2. Standard Tidy Long-Format Data Schema<a class="anchor" aria-label="anchor" href="#standard-tidy-long-format-data-schema"></a>
@@ -211,12 +235,19 @@ following key attributes:</p>
 <div class="section level3">
 <h3 id="data-export-write_metab">3. Data Export (<code>write_metab</code>)<a class="anchor" aria-label="anchor" href="#data-export-write_metab"></a>
 </h3>
-<p>Processed and normalized long-format metabolite data frames can be
-written back to wide-format CSV spreadsheets suitable for external
-sharing using <a href="file:///Users/brianyandell/Documents/Research/byandell-sysgen/metabr/R/write_metab.R#L13"><code>write_metab()</code></a>.</p>
+<p>Processed and normalized long-format metabolite data frames are
+exported into standardized wide-format CSV spreadsheets using
+<code><a href="../../reference/write_metab.html">write_metab()</a></code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Export processed data frame to wide-format CSV</span></span>
-<span><span class="fu"><a href="../../reference/write_metab.html">write_metab</a></span><span class="op">(</span><span class="va">qc_data</span>, <span class="st">"inst/extdata/metabolomics_qc_corrected.csv"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Export targeted data frame to wide-format CSV</span></span>
+<span><span class="fu"><a href="../../reference/write_metab.html">write_metab</a></span><span class="op">(</span><span class="va">rescale_HCneg</span>, <span class="st">"data/QC Batch Correction/20261020/Automated/HC_Neg_Targeted.csv"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Export untargeted data frame (preserves compound and medRt)</span></span>
+<span><span class="fu"><a href="../../reference/write_metab.html">write_metab</a></span><span class="op">(</span></span>
+<span>  <span class="va">rescale_HCnegU</span>,</span>
+<span>  <span class="st">"data/QC Batch Correction/20261020/Automated/HC_Neg_Untargeted.csv"</span>,</span>
+<span>  target <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

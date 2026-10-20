@@ -10,7 +10,7 @@ algorithm and curation discrepancy analysis implemented in **metabr**.
 ### 1. Quality Control Correction Algorithm
 
 The core pipeline driver
-[`qc_steps()`](file:///Users/brianyandell/Documents/Research/byandell-sysgen/metabr/R/qc_steps.R#L10)
+[`qc_steps()`](https://byandell-sysgen.github.io/metabr/reference/qc_steps.md)
 executes a 4-stage batch correction process:
 
 ``` mermaid
@@ -64,6 +64,30 @@ flowchart LR
     y_{\text{corrected}, i} = \frac{y_{\text{raw}, i}}{\text{CF}_{b, p, c, \text{medRt}}}
     ```
 
+When a compound is not measured in all plate QC samples,
+[`replace_missing_ave_cf()`](https://byandell-sysgen.github.io/metabr/reference/qc_steps.md)
+substitutes the missing CF with the average correction factor across all
+available metabolites on that plate.
+
+#### Mode-Specific Considerations (`exclude_first`)
+
+In `RP_Pos` mode, the first QC injection on each plate historically
+presents as an analytical outlier due to column conditioning. Passing
+`exclude_first = TRUE` to
+[`qc_steps()`](https://byandell-sysgen.github.io/metabr/reference/qc_steps.md)
+removes the first QC injection per plate prior to computing plate QC
+averages:
+
+``` r
+
+# Targeted RP_Pos correction dropping initial QC outlier
+rescale_RPpos <- qc_steps(
+  dirpath = dirpath,
+  filename = "DO_Plasma_RP_Pos_Targeted_For_Batch_Correction.csv",
+  exclude_first = TRUE
+)
+```
+
 ------------------------------------------------------------------------
 
 ### 2. Retention Time (`medRt`) & Peak Curation
@@ -82,8 +106,9 @@ times.
 
 ### 3. Curation Discrepancy Analysis (`hand_auto`)
 
-To evaluate automated QC correction against manual expert curation,
-[`hand_auto()`](file:///Users/brianyandell/Documents/Research/byandell-sysgen/metabr/R/hand_auto.R#L13)
+To evaluate automated QC correction against manual expert curation (as
+done in the `20231127` Founder Plasma benchmark),
+[`hand_auto()`](https://byandell-sysgen.github.io/metabr/reference/hand_auto.md)
 calculates compound-wise ratios across samples:
 
 ``` math

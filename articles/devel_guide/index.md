@@ -4,7 +4,7 @@
 
 ### Package Purpose & Ecosystem
 
-**metabr** (v0.2.3) is an R package within the `foundr` / systems
+**metabr** (v0.2.4) is an R package within the `foundr` / systems
 genetics ecosystem providing specialized tools for metabolomics data
 ingestion, mass spectrometry peak-area quality control (QC) batch
 correction, normalization, and curation discrepancy analysis.
@@ -83,6 +83,27 @@ devtools::check(cran = FALSE, vignettes = FALSE)
 
 ------------------------------------------------------------------------
 
+### Batch Organization & Pipeline Workflows
+
+Metabolomics data drops are organized by timestamped subdirectories
+under `data/"QC Batch Correction"` (`20231127`, `20251112`, `20261020`),
+as documented in
+[`datasets.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/datasets.md).
+
+End-to-end processing is automated through `QC_Automation.Rmd`,
+parameterized by `batch_date`:
+
+``` r
+
+# Execute pipeline for default batch (20261020)
+rmarkdown::render("QC_Automation.Rmd")
+
+# Or render an earlier cohort
+rmarkdown::render("QC_Automation.Rmd", params = list(batch_date = "20251112"))
+```
+
+------------------------------------------------------------------------
+
 ### Developer Guide Navigation
 
 This Developer Guide is organized into the following detailed
@@ -101,3 +122,15 @@ sub-articles:
     Specifications](https://byandell-sysgen.github.io/metabr/articles/devel_guide/data_ingestion.md)**:
     Detailed schemas for raw mass spectrometry spreadsheets, minute
     time-course files, and long-format tidy data frame representations.
+4.  **[CI/CD & Site Deployment
+    Walkthrough](https://byandell-sysgen.github.io/metabr/articles/devel_guide/deployment.md)**:
+    Specifications for `pkgdown` site building, GitHub Actions
+    deployment workflow, and repository configuration.
+5.  **[Package Refactoring & Data
+    Reorganization](https://byandell-sysgen.github.io/metabr/articles/devel_guide/refactor.md)**:
+    Context and timeline for the 2026 data reorganization, QC pipeline
+    unification, and recipe for ingesting future data drops.
+6.  **[QC Datasets & Directory
+    Organization](https://byandell-sysgen.github.io/metabr/articles/devel_guide/datasets.md)**:
+    Details on timestamped data drops under
+    `data/"QC Batch Correction"`, protocol SOPs, and MS OneDrive links.

@@ -18,10 +18,6 @@ plot(object, ...)
 
 ## Arguments
 
-- hand:
-
-- auto:
-
 - object:
 
   object of class \`hand_auto\`

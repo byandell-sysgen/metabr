@@ -38,10 +38,6 @@ read_raw_metab(dirpath, filename, sheet = 1, skip = 0, Batch_Plate = NULL)
 
   add \`Batch\` and \`Plate\` if not \`NULL\`.
 
-- rawobject:
-
-- qcobject:
-
 - drop_fewer:
 
   drop compounds with fewer than all QC entries

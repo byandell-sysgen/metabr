@@ -44,6 +44,20 @@ flowchart TD
     class tidyDF sch
 ```
 
+#### Batch Directory Organization
+
+Metabolite data transfers are stored by dated drops under
+`data/"QC Batch Correction"` (documented in
+[`datasets.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/datasets.md)):
+
+- **`20231127/` (Founder Plasma)**: Contains raw CSVs in
+  `#Founder_Plasma_Raw_Data/` and hand-calculated reference workbooks in
+  `#Founder_Plasma_Batch_Corrected_Data/`.
+- **`20251112/` (DO Livers)**: Raw CSVs in `2025_Nov_Raw/` (featuring
+  `(in)` input indicators and `min1000` minimum area flags).
+- **`20261020/` (DO Plasma)**: Raw/corrected CSVs in
+  `DO_Plasma_tar_untar_metab_For_Batch_Correction/`.
+
 ------------------------------------------------------------------------
 
 ### 2. Standard Tidy Long-Format Data Schema
@@ -70,13 +84,19 @@ attributes:
 
 ### 3. Data Export (`write_metab`)
 
-Processed and normalized long-format metabolite data frames can be
-written back to wide-format CSV spreadsheets suitable for external
-sharing using
-[`write_metab()`](file:///Users/brianyandell/Documents/Research/byandell-sysgen/metabr/R/write_metab.R#L13).
+Processed and normalized long-format metabolite data frames are exported
+into standardized wide-format CSV spreadsheets using
+[`write_metab()`](https://byandell-sysgen.github.io/metabr/reference/write_metab.md):
 
 ``` r
 
-# Export processed data frame to wide-format CSV
-write_metab(qc_data, "inst/extdata/metabolomics_qc_corrected.csv")
+# Export targeted data frame to wide-format CSV
+write_metab(rescale_HCneg, "data/QC Batch Correction/20261020/Automated/HC_Neg_Targeted.csv")
+
+# Export untargeted data frame (preserves compound and medRt)
+write_metab(
+  rescale_HCnegU,
+  "data/QC Batch Correction/20261020/Automated/HC_Neg_Untargeted.csv",
+  target = FALSE
+)
 ```

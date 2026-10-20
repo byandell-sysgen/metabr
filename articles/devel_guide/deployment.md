@@ -1,0 +1,134 @@
+# CI/CD & Site Deployment Walkthrough
+
+## CI/CD & Site Deployment Walkthrough
+
+This document records the architectural blueprint, package structure,
+and GitHub Pages deployment workflow for the **metabr** (v0.2.4)
+documentation infrastructure.
+
+------------------------------------------------------------------------
+
+### 1. Documentation Architecture & Blueprint
+
+#### Purpose
+
+Provide comprehensive documentation infrastructure across the `foundr` /
+systems genetics ecosystem (`metabr`, `modulr`, `foundrHarmony`)
+detailing codebase architecture, function indexes, quality control /
+data flow methodology, and automated deployment via `pkgdown` and GitHub
+Actions.
+
+#### Architecture Specifications
+
+1.  **Root Guide
+    ([`DEVELOPER.md`](https://byandell-sysgen.github.io/metabr/DEVELOPER.md))**:
+    - High-level package introduction, ecosystem role, directory
+      structure, function reference, developer quick start
+      (`devtools::load_all()`), and release guidelines.
+2.  **Vignettes & Articles (`vignettes/devel_guide/`)**:
+    - [`index.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/index.md):
+      Overview, ecosystem integration flowchart, and local development
+      commands.
+    - [`qc_pipeline.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/qc_pipeline.md):
+      In-depth methodology detailing mathematical formulations,
+      algorithm stages, sub-flowcharts, and S3 class diagnostic
+      routines.
+    - [`data_ingestion.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/data_ingestion.md):
+      Data format specifications, column schemas, parser functions, and
+      export routines.
+    - [`deployment.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/deployment.md):
+      This CI/CD architecture and publishing walkthrough.
+3.  **`pkgdown` Site Configuration
+    ([`_pkgdown.yml`](https://byandell-sysgen.github.io/metabr/_pkgdown.yml))**:
+    - Bootstrap 5 template.
+    - Dynamic Mermaid JS v10 flowchart rendering header block.
+    - Custom **Developer Guide** navbar dropdown menu linking to
+      rendered HTML articles.
+    - Categorized function reference sections.
+4.  **GitHub Actions Deployment
+    ([`.github/workflows/pkgdown.yaml`](https://byandell-sysgen.github.io/metabr/.github/workflows/pkgdown.yaml))**:
+    - Automated workflow to build `pkgdown` site in CI/CD and deploy
+      HTML assets directly to the **`gh-pages`** branch.
+    - Configured
+      [`.gitignore`](https://byandell-sysgen.github.io/metabr/.gitignore)
+      (`docs/`) and
+      [`.Rbuildignore`](https://byandell-sysgen.github.io/metabr/.Rbuildignore).
+
+------------------------------------------------------------------------
+
+### 2. Package File Structure
+
+The documentation and CI/CD assets are organized as follows:
+
+| File Path | Description |
+|----|----|
+| [`DEVELOPER.md`](https://byandell-sysgen.github.io/metabr/DEVELOPER.md) | Primary developer guide detailing package architecture, mass spectrometry raw input formats, QC correction mathematics, S3 class definitions, testing procedures, and release guidelines. |
+| [`vignettes/devel_guide/index.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/index.md) | High-level developer overview, package purpose, local quick start, and top-level end-to-end Mermaid flowchart. |
+| [`vignettes/devel_guide/qc_pipeline.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/qc_pipeline.md) | Technical reference detailing the 4-stage quality control correction algorithm ([`qc_steps()`](https://byandell-sysgen.github.io/metabr/reference/qc_steps.md)), correction factor ($`\text{CF}`$) formulas, retention time (`medRt`) handling, and [`hand_auto()`](https://byandell-sysgen.github.io/metabr/reference/hand_auto.md) curation discrepancy analysis. |
+| [`vignettes/devel_guide/data_ingestion.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/data_ingestion.md) | Data specifications detailing raw CSV/Excel parsers, minute time-course loaders, long-format tidy data frame schemas, and [`write_metab()`](https://byandell-sysgen.github.io/metabr/reference/write_metab.md) export rules. |
+| [`vignettes/devel_guide/deployment.Rmd`](https://byandell-sysgen.github.io/metabr/articles/devel_guide/deployment.md) | Deployment and CI/CD architecture walkthrough. |
+| [`_pkgdown.yml`](https://byandell-sysgen.github.io/metabr/_pkgdown.yml) | `pkgdown` configuration with Bootstrap 5 styling, dynamic Mermaid JS v10 flowchart rendering block in headers, custom navbar, and organized function reference sections. |
+| [`.github/workflows/pkgdown.yaml`](https://byandell-sysgen.github.io/metabr/.github/workflows/pkgdown.yaml) | Automated GitHub Actions workflow to build and deploy the `pkgdown` documentation site to the `gh-pages` branch on every push to `master`. |
+| [`.gitignore`](https://byandell-sysgen.github.io/metabr/.gitignore) | Added `docs/` to `.gitignore` to prevent generated site files from cluttering the source branch. |
+| [`.Rbuildignore`](https://byandell-sysgen.github.io/metabr/.Rbuildignore) | Updated to ignore `_pkgdown.yml`, `.github`, `DEVELOPER.md`, and `docs` during package builds. |
+| [`DESCRIPTION`](https://byandell-sysgen.github.io/metabr/DESCRIPTION) | Package metadata and documentation URL (`https://byandell-sysgen.github.io/metabr`). |
+
+------------------------------------------------------------------------
+
+### 3. Local Verification
+
+To preview the documentation site locally before pushing:
+
+``` r
+
+# Build pkgdown documentation site locally
+pkgdown::build_site(install = FALSE)
+```
+
+Example verification trace:
+
+``` text
+── Sitrep ──────────────────────────────────────────────────────────────────────
+✔ URLs ok.
+✔ Favicons ok.
+✔ Open graph metadata ok.
+✔ Articles metadata ok.
+✔ Reference metadata ok.
+── Initialising site ───────────────────────────────────────────────────────────
+── Building home ───────────────────────────────────────────────────────────────
+Writing `authors.html`
+Reading DEVELOPER.md
+Reading README.md
+Writing `404.html`
+── Building function reference ─────────────────────────────────────────────────
+Writing `reference/index.html`
+── Building articles ───────────────────────────────────────────────────────────
+Writing `articles/index.html`
+Reading vignettes/devel_guide/data_ingestion.Rmd
+Writing `articles/devel_guide/data_ingestion.html`
+Reading vignettes/devel_guide/index.Rmd
+Writing `articles/devel_guide/index.html`
+Reading vignettes/devel_guide/qc_pipeline.Rmd
+Writing `articles/devel_guide/qc_pipeline.html`
+Reading vignettes/devel_guide/deployment.Rmd
+Writing `articles/devel_guide/deployment.html`
+── Finished building pkgdown site for package metabr ───────────────────────────
+```
+
+------------------------------------------------------------------------
+
+### 4. GitHub Pages Publishing Instructions
+
+1.  **Commit and Push Source Files**:
+
+    ``` bash
+    git add .gitignore .Rbuildignore _pkgdown.yml .github/ DESCRIPTION vignettes/ DEVELOPER.md
+    git commit -m "Update developer guides and deployment workflow"
+    git push origin master
+    ```
+
+2.  **Enable GitHub Pages**:
+
+    - Go to `https://github.com/byandell-sysgen/metabr/settings/pages`
+    - Set **Source** to `Deploy from a branch` $`\rightarrow`$ Branch
+      **`gh-pages`** and folder **`/ (root)`**.

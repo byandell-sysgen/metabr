@@ -1,9 +1,13 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://byandell-sysgen.github.io/metabr/404.html</loc></url>
+<url><loc>https://byandell-sysgen.github.io/metabr/AGENTS.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/DEVELOPER.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/articles/devel_guide/data_ingestion.html</loc></url>
+<url><loc>https://byandell-sysgen.github.io/metabr/articles/devel_guide/datasets.html</loc></url>
+<url><loc>https://byandell-sysgen.github.io/metabr/articles/devel_guide/deployment.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/articles/devel_guide/index.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/articles/devel_guide/qc_pipeline.html</loc></url>
+<url><loc>https://byandell-sysgen.github.io/metabr/articles/devel_guide/refactor.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/articles/index.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/authors.html</loc></url>
 <url><loc>https://byandell-sysgen.github.io/metabr/index.html</loc></url>

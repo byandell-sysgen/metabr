@@ -39,7 +39,7 @@
 
     <a class="navbar-brand me-2" href="../../index.html">metabr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,9 @@
 <li><a class="dropdown-item" href="../../articles/devel_guide/index.html">Developer Guide Overview &amp; Architecture</a></li>
     <li><a class="dropdown-item" href="../../articles/devel_guide/qc_pipeline.html">QC Pipeline &amp; Correction Methodology</a></li>
     <li><a class="dropdown-item" href="../../articles/devel_guide/data_ingestion.html">Data Ingestion &amp; IO Format Specifications</a></li>
+    <li><a class="dropdown-item" href="../../articles/devel_guide/deployment.html">CI/CD &amp; Site Deployment Walkthrough</a></li>
+    <li><a class="dropdown-item" href="../../articles/devel_guide/refactor.html">Package Refactoring &amp; Data Reorganization</a></li>
+    <li><a class="dropdown-item" href="../../articles/devel_guide/datasets.html">QC Datasets &amp; Directory Organization</a></li>
   </ul>
 </li>
       </ul>
@@ -92,8 +95,8 @@ algorithm and curation discrepancy analysis implemented in
 <div class="section level3">
 <h3 id="quality-control-correction-algorithm">1. Quality Control Correction Algorithm<a class="anchor" aria-label="anchor" href="#quality-control-correction-algorithm"></a>
 </h3>
-<p>The core pipeline driver <a href="file:///Users/brianyandell/Documents/Research/byandell-sysgen/metabr/R/qc_steps.R#L10"><code>qc_steps()</code></a>
-executes a 4-stage batch correction process:</p>
+<p>The core pipeline driver <code><a href="../../reference/qc_steps.html">qc_steps()</a></code> executes a 4-stage
+batch correction process:</p>
 <pre class="mermaid"><code>flowchart LR
     subgraph step1 [Stage 1: Raw Ingestion]
         readRaw["read_raw_metab()"]
@@ -133,6 +136,26 @@ executes a 4-stage batch correction process:</p>
 <li><p><strong>Batch-Corrected Sample Intensity</strong>:
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mrow><mtext mathvariant="normal">corrected</mtext><mo>,</mo><mi>i</mi></mrow></msub><mo>=</mo><mfrac><msub><mi>y</mi><mrow><mtext mathvariant="normal">raw</mtext><mo>,</mo><mi>i</mi></mrow></msub><msub><mtext mathvariant="normal">CF</mtext><mrow><mi>b</mi><mo>,</mo><mi>p</mi><mo>,</mo><mi>c</mi><mo>,</mo><mtext mathvariant="normal">medRt</mtext></mrow></msub></mfrac></mrow><annotation encoding="application/x-tex">y_{\text{corrected}, i} = \frac{y_{\text{raw}, i}}{\text{CF}_{b, p, c, \text{medRt}}}</annotation></semantics></math></p></li>
 </ol>
+<p>When a compound is not measured in all plate QC samples,
+<code><a href="../../reference/qc_steps.html">replace_missing_ave_cf()</a></code> substitutes the missing CF with
+the average correction factor across all available metabolites on that
+plate.</p>
+</div>
+<div class="section level4">
+<h4 id="mode-specific-considerations-exclude_first">Mode-Specific Considerations (<code>exclude_first</code>)<a class="anchor" aria-label="anchor" href="#mode-specific-considerations-exclude_first"></a>
+</h4>
+<p>In <code>RP_Pos</code> mode, the first QC injection on each plate
+historically presents as an analytical outlier due to column
+conditioning. Passing <code>exclude_first = TRUE</code> to
+<code><a href="../../reference/qc_steps.html">qc_steps()</a></code> removes the first QC injection per plate prior
+to computing plate QC averages:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Targeted RP_Pos correction dropping initial QC outlier</span></span>
+<span><span class="va">rescale_RPpos</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/qc_steps.html">qc_steps</a></span><span class="op">(</span></span>
+<span>  dirpath <span class="op">=</span> <span class="va">dirpath</span>,</span>
+<span>  filename <span class="op">=</span> <span class="st">"DO_Plasma_RP_Pos_Targeted_For_Batch_Correction.csv"</span>,</span>
+<span>  exclude_first <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>
@@ -156,9 +179,10 @@ independently corrected.</li>
 <div class="section level3">
 <h3 id="curation-discrepancy-analysis-hand_auto">3. Curation Discrepancy Analysis (<code>hand_auto</code>)<a class="anchor" aria-label="anchor" href="#curation-discrepancy-analysis-hand_auto"></a>
 </h3>
-<p>To evaluate automated QC correction against manual expert curation,
-<a href="file:///Users/brianyandell/Documents/Research/byandell-sysgen/metabr/R/hand_auto.R#L13"><code>hand_auto()</code></a>
-calculates compound-wise ratios across samples:</p>
+<p>To evaluate automated QC correction against manual expert curation
+(as done in the <code>20231127</code> Founder Plasma benchmark),
+<code><a href="../../reference/hand_auto.html">hand_auto()</a></code> calculates compound-wise ratios across
+samples:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Ratio</mtext><mo>=</mo><mfrac><msub><mtext mathvariant="normal">Value</mtext><mtext mathvariant="normal">hand</mtext></msub><msub><mtext mathvariant="normal">Value</mtext><mtext mathvariant="normal">auto</mtext></msub></mfrac></mrow><annotation encoding="application/x-tex">\text{Ratio} = \frac{\text{Value}_{\text{hand}}}{\text{Value}_{\text{auto}}}</annotation></semantics></math></p>
 <pre class="mermaid"><code>flowchart TD
     handData["Manual Curation Data Frame"] --&gt; handAutoFunc["hand_auto()"]
