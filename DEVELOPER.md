@@ -1,6 +1,6 @@
 # Developer Guide for metabr
 
-Welcome to the developer guide for **metabr** (v0.2.3), an R package designed for metabolite data ingestion, quality control (QC) batch correction, normalization, and curation discrepancy analysis for metabolomics data (Kibbey Lab / Attie Lab systems genetics).
+Welcome to the developer guide for **metabr** (v0.2.4), an R package designed for metabolite data ingestion, quality control (QC) batch correction, normalization, and curation discrepancy analysis for metabolomics data (Kibbey Lab / Attie Lab systems genetics).
 
 This document details package architecture, data models, developer environment setup, core QC batch-correction algorithms, S3 class definitions, and verification procedures.
 
