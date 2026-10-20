@@ -13,36 +13,46 @@ export(read_metab_minute)
 export(read_raw_metab)
 export(replace_missing_ave_cf)
 export(write_metab)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,count)
-importFrom(dplyr,everything)
-importFrom(dplyr,filter)
-importFrom(dplyr,full_join)
-importFrom(dplyr,group_by)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,row_number)
-importFrom(dplyr,select)
-importFrom(dplyr,summarize)
-importFrom(dplyr,ungroup)
-importFrom(ggplot2,autoplot)
-importFrom(ggplot2,facet_wrap)
-importFrom(ggplot2,geom_hline)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,scale_x_log10)
-importFrom(ggplot2,scale_y_log10)
-importFrom(ggplot2,theme)
-importFrom(ggplot2,ylab)
-importFrom(purrr,map)
-importFrom(purrr,set_names)
+importFrom(dplyr,
+  bind_rows,
+  count,
+  everything,
+  filter,
+  full_join,
+  group_by,
+  left_join,
+  mutate,
+  row_number,
+  select,
+  summarize,
+  ungroup
+)
+importFrom(ggplot2,
+  autoplot,
+  facet_wrap,
+  geom_hline,
+  geom_point,
+  ggplot,
+  scale_x_log10,
+  scale_y_log10,
+  theme,
+  ylab
+)
+importFrom(purrr,
+  map,
+  set_names
+)
 importFrom(readr,read_csv)
 importFrom(readxl,read_excel)
 importFrom(rlang,.data)
-importFrom(stringr,str_detect)
-importFrom(stringr,str_remove)
-importFrom(stringr,str_replace)
-importFrom(tidyr,pivot_longer)
-importFrom(tidyr,pivot_wider)
-importFrom(tidyr,unite)
+importFrom(stringr,
+  str_detect,
+  str_remove,
+  str_replace
+)
+importFrom(tidyr,
+  pivot_longer,
+  pivot_wider,
+  unite
+)
 importFrom(utils,write.csv)

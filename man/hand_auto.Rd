@@ -16,10 +16,6 @@ ggplot_hand_auto(object, ...)
 \method{plot}{hand_auto}(object, ...)
 }
 \arguments{
-\item{hand}{}
-
-\item{auto}{}
-
 \item{object}{object of class `hand_auto`}
 
 \item{...}{parameters ignored}

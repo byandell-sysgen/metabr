@@ -1,159 +1,261 @@
 ---
-title: "QC_Automation"
+title: "QC Automation Pipeline"
 author: "Brian Yandell"
-date: "2024-09-09"
+date: "`r Sys.Date()`"
 output: html_document
+params:
+  batch_date: "20261020" # Choices: "20261020", "20251112", "20231127"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
+```{r libraries}
 library(metabr)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
 ```
 
-# QC steps and normalization (Batch Correction)
+# Overview
 
-Need to correct the two modes (`HC_Neg` and `RP_Pos`) separately.
-`HC_Neg` mode targeted data of founder samples used as example
-to showed how Qiushi did batch correction manually.
-See Batch_Correction_Procedure_RC2_Project.pdf
-(file `data/QC Batch Correction/Batch_Correction_Procedure_RC2_Project.pdf`)
+This notebook runs the automated quality control (QC) batch-correction pipeline for mass spectrometry metabolomics data across modes (`HC_Neg` and `RP_Pos`) and assay types (targeted and untargeted).
 
-```{r}
-# Raw data in CSV
-dirpath <- 'data/QC Batch Correction/#Founder_Plasma_Raw_Data'
-# Raw and Corrected data in XLSX
-handpath <- 'data/QC Batch Correction/#Founder_Plasma_Batch_Corrected_Data'
+The workflow is parameterized by batch date: `params$batch_date = "`r params$batch_date`"`.
+
+- **Cohort / Date Selected**: `r params$batch_date`
+- Reference protocols: `data/QC Batch Correction/Batch_Correction_Procedure_RC2_Project.pdf`
+
+---
+
+# Directory and File Configuration
+
+```{r configure_paths}
+batch_date <- as.character(params$batch_date)
+base_dir <- file.path("data", "QC Batch Correction", batch_date)
+
+if (!dir.exists(base_dir)) {
+  stop(sprintf("Batch directory not found: %s", base_dir))
+}
+
+# Resolve folder and file conventions per date batch
+batch_plate_hc <- NULL
+batch_plate_rp <- NULL
+
+if (batch_date == "20231127") {
+  # Founder Plasma (Benchmark with both Raw and Hand-Corrected Excel)
+  raw_dir <- file.path(base_dir, "#Founder_Plasma_Raw_Data")
+  hand_dir <- file.path(base_dir, "#Founder_Plasma_Batch_Corrected_Data")
+  out_dir <- file.path(base_dir, "Automated")
+  has_hand <- TRUE
+  
+  files <- list(
+    hc_neg_tar = "Founder_Plasma_All_Timepoints_HC_Neg_targeted_Raw.csv",
+    rp_pos_tar = "Founder_Plasma_All_Timepoints_RP_Pos_targeted_Raw.csv",
+    hc_neg_untar = "Founder_Plasma_All_Timepoints_HC_Neg_untargeted_Raw.csv",
+    rp_pos_untar = "Founder_Plasma_All_Timepoints_RP_Pos_untargeted_Raw.csv"
+  )
+  
+  # For 2023, derive Batch_Plate from reference Excel files
+  if (dir.exists(hand_dir)) {
+    hand_HCneg <- read_batch_metab(hand_dir, "Founder_Plasma_HC_Neg_Targeted_Batch_Corrected_Data.xlsx")
+    hand_RPpos <- read_batch_metab(hand_dir, "Founder_Plasma_RP_Pos_Targeted_Batch_Corrected_Data.xlsx")
+    batch_plate_hc <- hand_HCneg |>
+      dplyr::distinct(rundate, Batch, Plate) |>
+      tidyr::unite(Batch_Plate, Batch, Plate, remove = FALSE)
+    batch_plate_rp <- hand_RPpos |>
+      dplyr::distinct(rundate, Batch, Plate) |>
+      tidyr::unite(Batch_Plate, Batch, Plate, remove = FALSE)
+  }
+} else if (batch_date == "20251112") {
+  # DO Livers (Raw input CSVs only)
+  raw_dir <- file.path(base_dir, "2025_Nov_Raw")
+  hand_dir <- NULL
+  out_dir <- file.path(base_dir, "2025_Nov_Automated")
+  has_hand <- FALSE
+  
+  files <- list(
+    hc_neg_tar = "DO_Livers_HC_Neg_Targeted(in).csv",
+    rp_pos_tar = "DO_Livers_RP_Pos_Targeted.csv",
+    hc_neg_untar = "DO_Livers_HC_Neg_Untargeted_min1000.csv",
+    rp_pos_untar = "DO_Livers_RP_Pos_Untargeted_min1000.csv"
+  )
+} else if (batch_date == "20261020") {
+  # DO Plasma (Incoming data prepared for batch correction)
+  raw_dir <- file.path(base_dir, "DO_Plasma_tar_untar_metab_For_Batch_Correction")
+  hand_dir <- NULL
+  out_dir <- file.path(base_dir, "Automated")
+  has_hand <- FALSE
+  
+  files <- list(
+    hc_neg_tar = "DO_Plasma_HC_Neg_Targeted_For_Batch_Correction.csv",
+    rp_pos_tar = "DO_Plasma_RP_Pos_Targeted_For_Batch_Correction.csv",
+    hc_neg_untar = "DO_Plasma_HC_Neg_Untargeted_For_Batch_Correction.csv",
+    rp_pos_untar = "DO_Plasma_RP_Pos_Untargeted_For_Batch_Correction.csv"
+  )
+} else {
+  # Generic convention
+  raw_dir <- base_dir
+  hand_dir <- NULL
+  out_dir <- file.path(base_dir, "Automated")
+  has_hand <- FALSE
+  files <- list(
+    hc_neg_tar = "HC_Neg_Targeted.csv",
+    rp_pos_tar = "RP_Pos_Targeted.csv",
+    hc_neg_untar = "HC_Neg_Untargeted.csv",
+    rp_pos_untar = "RP_Pos_Untargeted.csv"
+  )
+}
+
+if (!dir.exists(out_dir)) {
+  dir.create(out_dir, recursive = TRUE)
+}
+
+cat("Input Directory: ", raw_dir, "\n")
+cat("Output Directory:", out_dir, "\n")
 ```
 
-## Read Hand-calculated Targeted Data
+---
 
-These are as CSV files and as sheets of XLSX files.
+# Verification of Input Files
 
-```{r warning=FALSE}
-hand_HCneg <- read_batch_metab(handpath,
-  "Founder_Plasma_HC_Neg_Targeted_Batch_Corrected_Data.xlsx")
+```{r check_files}
+check_input_file <- function(dirpath, filename) {
+  filepath <- file.path(dirpath, filename)
+  if (!file.exists(filepath)) {
+    return(list(exists = FALSE, size = 0, path = filepath))
+  }
+  list(exists = TRUE, size = file.info(filepath)$size, path = filepath)
+}
+
+file_status <- lapply(files, function(f) check_input_file(raw_dir, f))
+status_df <- data.frame(
+  Assay = names(file_status),
+  Filename = unlist(files),
+  Exists = sapply(file_status, `[[`, "exists"),
+  SizeBytes = sapply(file_status, `[[`, "size")
+)
+knitr::kable(status_df, caption = "Input Data File Status")
 ```
 
-```{r warning=FALSE}
-hand_RPpos <- read_batch_metab(handpath,
-  "Founder_Plasma_RP_Pos_Targeted_Batch_Corrected_Data.xlsx")
+---
+
+# Batch Correction: Targeted Data
+
+```{r targeted_qc}
+# HC_Neg Targeted
+f_hc_neg_tar <- file.path(raw_dir, files$hc_neg_tar)
+rescale_HCneg <- NULL
+
+if (file.exists(f_hc_neg_tar) && file.info(f_hc_neg_tar)$size > 0) {
+  message("Running QC steps on HC_Neg Targeted: ", files$hc_neg_tar)
+  rescale_HCneg <- qc_steps(
+    dirpath = raw_dir,
+    filename = files$hc_neg_tar,
+    exclude_first = FALSE,
+    Batch_Plate = batch_plate_hc
+  )
+} else {
+  message("Skipping HC_Neg Targeted (file empty or not found).")
+}
+
+# RP_Pos Targeted (exclude_first = TRUE because 1st QC historically outlier)
+f_rp_pos_tar <- file.path(raw_dir, files$rp_pos_tar)
+rescale_RPpos <- NULL
+
+if (file.exists(f_rp_pos_tar) && file.info(f_rp_pos_tar)$size > 0) {
+  message("Running QC steps on RP_Pos Targeted: ", files$rp_pos_tar)
+  rescale_RPpos <- qc_steps(
+    dirpath = raw_dir,
+    filename = files$rp_pos_tar,
+    exclude_first = TRUE,
+    Batch_Plate = batch_plate_rp
+  )
+} else {
+  message("Skipping RP_Pos Targeted (file empty or not found).")
+}
 ```
 
-```{r}
-BatchPlate_HCneg <- hand_HCneg |>
-   dplyr::distinct(rundate, Batch, Plate) |>
-   tidyr::unite(Batch_Plate, Batch, Plate, remove = FALSE)
+---
+
+# Batch Correction: Untargeted Data
+
+```{r untargeted_qc}
+# HC_Neg Untargeted
+f_hc_neg_untar <- file.path(raw_dir, files$hc_neg_untar)
+rescale_HCnegU <- NULL
+
+if (file.exists(f_hc_neg_untar) && file.info(f_hc_neg_untar)$size > 0) {
+  message("Running QC steps on HC_Neg Untargeted: ", files$hc_neg_untar)
+  rescale_HCnegU <- qc_steps(
+    dirpath = raw_dir,
+    filename = files$hc_neg_untar,
+    exclude_first = FALSE,
+    Batch_Plate = batch_plate_hc
+  )
+} else {
+  message("Skipping HC_Neg Untargeted (file empty or not found).")
+}
+
+# RP_Pos Untargeted
+f_rp_pos_untar <- file.path(raw_dir, files$rp_pos_untar)
+rescale_RPposU <- NULL
+
+if (file.exists(f_rp_pos_untar) && file.info(f_rp_pos_untar)$size > 0) {
+  message("Running QC steps on RP_Pos Untargeted: ", files$rp_pos_untar)
+  rescale_RPposU <- qc_steps(
+    dirpath = raw_dir,
+    filename = files$rp_pos_untar,
+    exclude_first = TRUE,
+    Batch_Plate = batch_plate_rp
+  )
+} else {
+  message("Skipping RP_Pos Untargeted (file empty or not found).")
+}
 ```
 
-```{r}
-BatchPlate_RPpos <- hand_RPpos |>
-   dplyr::distinct(rundate, Batch, Plate) |>
-   tidyr::unite(Batch_Plate, Batch, Plate, remove = FALSE)
+---
+
+# Curation Diagnostics (if Hand Curation Present)
+
+```{r hand_curation_check}
+if (isTRUE(has_hand) && !is.null(hand_dir)) {
+  hand_file <- "Founder_Plasma_HC_Neg_Targeted_Batch_Corrected_Data.xlsx"
+  if (file.exists(file.path(hand_dir, hand_file)) && !is.null(rescale_HCneg)) {
+    curation_check <- hand_auto(hand_HCneg, rescale_HCneg)
+    print(autoplot(curation_check))
+  }
+}
 ```
 
-## Individual QC Steps
+---
 
-Shown for `HC_Neg` data.
-For `RP_Pos` data, exclude every 1st QC run on plate as it
-historically was always an outlier.
-QC steps were verified against hand-calculations.
-See [QC_steps.Rmd](https://github.com/byandell/metabr/blob/master/QC_steps.Rmd)
-section titles `Examine QC data`.
+# Write Out Processed CSV Files
 
-1. Transpose Data and Extract Info from Sample Names
+```{r export_results}
+if (!is.null(rescale_HCneg)) {
+  out_file <- file.path(out_dir, "HC_Neg_Targeted.csv")
+  write_metab(rescale_HCneg, out_file)
+  cat("Wrote:", out_file, "\n")
+}
 
-Note addition of `BatchPlate_HCneg` as QC is by `Plate` and `Batch`, not `rundate`.
+if (!is.null(rescale_RPpos)) {
+  out_file <- file.path(out_dir, "RP_Pos_Targeted.csv")
+  write_metab(rescale_RPpos, out_file)
+  cat("Wrote:", out_file, "\n")
+}
 
-```{r}
-raw_HCneg <- read_raw_metab(dirpath,
-  "Founder_Plasma_All_Timepoints_HC_Neg_targeted_Raw.csv",
-  Batch_Plate = BatchPlate_HCneg)
+if (!is.null(rescale_HCnegU)) {
+  out_file <- file.path(out_dir, "HC_Neg_Untargeted.csv")
+  write_metab(rescale_HCnegU, out_file, target = FALSE)
+  cat("Wrote:", out_file, "\n")
+}
+
+if (!is.null(rescale_RPposU)) {
+  out_file <- file.path(out_dir, "RP_Pos_Untargeted.csv")
+  write_metab(rescale_RPposU, out_file, target = FALSE)
+  cat("Wrote:", out_file, "\n")
+}
 ```
-
-2. Only pick up QC runs of every plate, and calculate correction factors (CF) for each metabolite.
-    + Average of QC per plate/Average of QC all plate.
-
-```{r}
-qc_HCneg <- calc_cf(raw_HCneg)
-```
-
-3. If metabolites weren’t measured in (**all?**) QC samples, but were measured in study samples: use the CF average of all metabolites in one plate as the CF of the missing metabolites on that plate.
-
-```{r}
-qc_HCneg <- replace_missing_ave_cf(qc_HCneg)
-```
-
-4. Correct the Peak Area using CF for each metabolite 
-
-```{r}
-rescale_HCneg <- correct_raw_cf(raw_HCneg, qc_HCneg)
-```
-
-## Combine QC Steps Into One Routine.
-
-```{r}
-rescale_HCneg <- qc_steps(handpath,
-  "Founder_Plasma_HC_Neg_Targeted_Batch_Corrected_Data.xlsx",
-  FALSE, BatchPlate_HCneg)
-```
-
-```{r}
-rescale_RPpos <- qc_steps(handpath,
-  "Founder_Plasma_RP_Pos_targeted_Batch_Corrected_Data.xlsx",
-  TRUE, BatchPlate_RPpos)
-```
-
-# Untargeted Data
-
-```{r}
-rescale_HCnegU <- qc_steps(handpath,
-  "Founder_Plasma_HC_Neg_untargeted_All_Batch_Corrected_Data.xlsx",
-  FALSE, BatchPlate_HCneg)
-```
-
-```{r}
-rescale_RPposU <- qc_steps(handpath,
-  "Founder_Plasma_RP_pos_untargeted_All_Batch_Corrected_Data.xlsx",
-  TRUE, BatchPlate_RPpos)
-```
-
-# Write Out Files
-
-```{r}
-wrpath <- "data/Automated"
-if(!dir.exists(wrpath)) dir.create(wrpath)
-write_metab(rescale_HCneg,
-            file.path(wrpath, "HC_Neg_Targeted.csv"))
-write_metab(rescale_HCnegU,
-            file.path(wrpath, "HC_Neg_Untargeted.csv"), FALSE)
-write_metab(rescale_RPpos,
-            file.path(wrpath, "RP_Pos_Targeted.csv"))
-write_metab(rescale_RPposU, 
-            file.path(wrpath, "RP_Pos_Untargeted.csv"), FALSE)
-```
-
-```{r}
-HCneg_Tar <- rescale_HCneg |>
-  dplyr::select(
-  sample, run, rundate, Batch, Plate, mouse_id, time, rep, compound, value) |>
-  tidyr::pivot_wider(id_cols = sample:rep,
-    names_from = "compound", values_from = "value")
-```
-
-```{r}
-HCneg_UnTar <- rescale_HCnegU |>
-  dplyr::select(
-  sample, run, rundate, Batch, Plate, mouse_id, time, rep, compound, medRt, value) |>
-  dplyr::mutate(medRt = round(medRt, 3)) |>
-  tidyr::unite(compound, compound, medRt) |>
-  tidyr::pivot_wider(id_cols = sample:rep,
-    names_from = "compound", values_from = "value")
-```
-

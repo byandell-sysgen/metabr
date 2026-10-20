@@ -31,10 +31,6 @@ read_raw_metab(dirpath, filename, sheet = 1, skip = 0, Batch_Plate = NULL)
 
 \item{Batch_Plate}{add `Batch` and `Plate` if not `NULL`.}
 
-\item{rawobject}{}
-
-\item{qcobject}{}
-
 \item{drop_fewer}{drop compounds with fewer than all QC entries}
 
 \item{sheet}{sheet number if excel type file}

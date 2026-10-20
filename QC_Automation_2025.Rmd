@@ -9,10 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ```{r}
 library(metabr)
 ```
@@ -30,7 +26,7 @@ See Batch_Correction_Procedure_RC2_Project.pdf
 
 ```{r}
 # Raw data in CSV
-dirpath <- 'data/2025_Nov_Raw'
+dirpath <- "data/QC Batch Correction/20251112/2025_Nov_Raw"
 ```
 
 ## Individual QC Steps
@@ -47,8 +43,10 @@ section titles `Examine QC data`.
 Note addition of `BatchPlate_HCneg` as QC is by `Plate` and `Batch`, not `rundate`.
 
 ```{r}
-raw_HCneg <- read_raw_metab(dirpath,
-  "DO_Livers_HC_Neg_Targeted(in).csv")
+raw_HCneg <- read_raw_metab(
+  dirpath,
+  "DO_Livers_HC_Neg_Targeted(in).csv"
+)
 ```
 
 2. Only pick up QC runs of every plate, and calculate correction factors (CF) for each metabolite.
@@ -73,39 +71,55 @@ rescale_HCneg <- correct_raw_cf(raw_HCneg, qc_HCneg)
 ## Combine QC Steps Into One Routine.
 
 ```{r}
-rescale_HCneg <- qc_steps(dirpath,
-  "DO_Livers_HC_Neg_Targeted(in).csv")
+rescale_HCneg <- qc_steps(
+  dirpath,
+  "DO_Livers_HC_Neg_Targeted(in).csv"
+)
 ```
 
 ```{r}
-rescale_RPpos <- qc_steps(dirpath,
-  "DO_Livers_RP_Pos_Targeted.csv")
+rescale_RPpos <- qc_steps(
+  dirpath,
+  "DO_Livers_RP_Pos_Targeted.csv"
+)
 ```
 
 # Untargeted Data
 
 ```{r}
-rescale_HCnegU <- qc_steps(dirpath,
-  "DO_Livers_HC_Neg_Untargeted_min1000.csv")
+rescale_HCnegU <- qc_steps(
+  dirpath,
+  "DO_Livers_HC_Neg_Untargeted_min1000.csv"
+)
 ```
 
 ```{r}
-rescale_RPposU <- qc_steps(dirpath,
-  "DO_Livers_RP_Pos_Untargeted_min1000.csv")
+rescale_RPposU <- qc_steps(
+  dirpath,
+  "DO_Livers_RP_Pos_Untargeted_min1000.csv"
+)
 ```
 
 # Write Out Files
 
 ```{r}
-wrpath <- "data/2025_Nov_Automated"
-if(!dir.exists(wrpath)) dir.create(wrpath)
-write_metab(rescale_HCneg,
-            file.path(wrpath, "HC_Neg_Targeted.csv"))
-write_metab(rescale_RPpos,
-            file.path(wrpath, "RP_Pos_Targeted.csv"))
-write_metab(rescale_HCnegU,
-            file.path(wrpath, "HC_Neg_Untargeted.csv"), FALSE)
-write_metab(rescale_RPposU, 
-            file.path(wrpath, "RP_Pos_Untargeted.csv"), FALSE)
+wrpath <- "data/QC Batch Correction/20251112/2025_Nov_Automated"
+if (!dir.exists(wrpath)) dir.create(wrpath, recursive = TRUE)
+write_metab(
+  rescale_HCneg,
+  file.path(wrpath, "HC_Neg_Targeted.csv")
+)
+write_metab(
+  rescale_RPpos,
+  file.path(wrpath, "RP_Pos_Targeted.csv")
+)
+write_metab(
+  rescale_HCnegU,
+  file.path(wrpath, "HC_Neg_Untargeted.csv"), FALSE
+)
+write_metab(
+  rescale_RPposU,
+  file.path(wrpath, "RP_Pos_Untargeted.csv"), FALSE
+)
 ```
 
